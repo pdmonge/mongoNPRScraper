@@ -1,5 +1,5 @@
 {
-  "name": "Mongo NPR Scraper",
+  "name": "mongo-npr-scraper",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -13,8 +13,11 @@
   "dependencies": {
     "axios": "^0.16.2",
     "body-parser": "^1.18.2",
+    "bootbox": "^4.4.0",
+    "bootstrap": "^3.3.7",
     "cheerio": "^1.0.0-rc.2",
     "express": "^4.16.1",
+    "moment": "^2.20.1",
     "mongoose": "^4.12.0",
     "morgan": "^1.9.0"
   }

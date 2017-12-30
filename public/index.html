@@ -2,48 +2,61 @@
 <html lang="en-us">
   <head>
     <meta charset="UTF-8">
-    <title>Scraping With Mongoose</title>
-    <style>
-      body { background-color: #F2F6D0 }
-      #wrapper {
-        width: 960px;
-        margin-left: auto;
-        margin-right: auto;
-        padding-top: 5%;
-      }
-      #articles {
-        display: inline-block;
-        overflow: auto;
-        width: 60%;
-        height: 700px;
-      }
-      #notes {
-        float: right;
-        width: 30%;
-      }
-      textarea, input {
-        display: block;
-        width: 100%;
-        background-color: #FCF5C7;
-      }
-      input {
-        height: 36px;
-        font-size: 24px;
-      }
-      textarea {
-        height: 200px;
-        font-size: 18px;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="wrapper">
-      <h1>Note Scraper</h1>
-      <h2><i>If you can do this...the homework should be no problem.</i></h2>
-      <div id="articles"></div>
-      <div id="notes"></div>
-    </div>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NPR Scraper</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script language="javascript" src="js/bootstrap.min.js"></script>
+    <script language="javascript" src="bootbox.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="bootstrap-yeti.min.css"/>
+    <link rel="stylesheet" type="text/css" href="style.css"/>
+  </head>
+
+  <body>
+    <!-- Modal for creating new notes -->
+    <div class="modal fade" id="modal-new-note" tabindex="-1" role="dialog" aria-labelledby="ModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="ModalLabel">New Note</h4>
+          </div>
+          <div class="modal-body">
+            <form>
+              <div class="form-group">
+                <label for="note-title" class="control-label">Title:</label>
+                <input type="text" class="form-control" id="note-title">
+              </div>
+              <div class="form-group">
+                <label for="note-body" class="control-label">Note:</label>
+                <textarea class="form-control" id="note-body"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button id="save-note" type="button" class="btn btn-primary">Save Note</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="jumbotron">
+      <div class="container-fluid">
+        <h1>NPR ARTICLE SCRAPER</h1>
+        <br><br>
+        <div class="row">
+          <div class="col-md-4"></div>
+          <div class="col-md-4">
+            <button id="scrape-button" type="button" class="btn btn-success btn-lg btn-block">Scrape Articles</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Main articles display area  -->
+    <div class="container-fluid">
+      <div id="articles"></div>
+    </div>
     <script src="app.js"></script>
   </body>
 </html>

@@ -1,0 +1,24 @@
+[{
+  "_id" : "5a42cb16ddb93bea15c01d23",
+  "title" : "This is a sample note about Gov't Shutdown article",
+  "body" : "This is the body of the sample note about the government shutdown article.  Isn't it fascinating?",
+  "__v" : 0
+},
+{
+  "_id" : "5a4700f4d6ed002e8057ccf2",
+  "title" : "Note about Obamacare repeal",
+  "body" : "The change is interesting.",
+  "__v" : 0
+},
+{
+  "_id" : "5a47d41f45d5bb396453125b",
+  "title" : "Something about Pence's Afghanistan trip",
+  "body" : "This should be some text about Mike Pence's trip to Afghanistan.",
+  "__v" : 0
+},
+{
+  "_id" : "5a47d80c2b7c73e938295aba",
+  "title" : "This is another note about preventing Government Shutdown",
+  "body" : "This is another note about preventing Government ShutdownThis is another note about preventing Government ShutdownThis is another note about preventing Government ShutdownThis is another note about preventing Government Shutdown.",
+  "__v" : 0
+}]

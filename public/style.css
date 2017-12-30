@@ -1,0 +1,45 @@
+/* body { background-color: #F2F6D0 } */
+.jumbotron {
+  background-color: darkcyan;
+}
+.jumbotron h1 {
+  text-align: center;
+  color: ghostwhite;
+}
+.well {
+  background-color: beige;
+}
+.article-heading h2 {
+  font-weight: bold;
+}
+.article-heading h2, .note-heading h3 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: normal;
+  width: 75%;
+  padding-top: 8px;
+}
+/* #articles {
+  display: inline-block;
+  overflow: auto;
+  width: 60%;
+  height: 700px;
+} */
+/* #notes {
+  float: right;
+  width: 30%;
+} */
+textarea, input {
+  display: block;
+  width: 100%;
+  background-color: #FCF5C7;
+}
+input {
+  height: 36px;
+  font-size: 24px;
+}
+textarea {
+  height: 200px;
+  font-size: 18px;
+}

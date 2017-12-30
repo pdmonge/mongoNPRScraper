@@ -1,73 +1,118 @@
-var express = require("express");
-var bodyParser = require("body-parser");
-var logger = require("morgan");
-var mongoose = require("mongoose");
+const express = require("express");
+const bodyParser = require("body-parser");
+const logger = require("morgan");
+const mongoose = require("mongoose");
+const path = require("path");
+const moment = require("moment");
 
-// Our scraping tools
-// Axios is a promise-based http library, similar to jQuery's Ajax method
-// It works on the client and on the server
-var axios = require("axios");
-var cheerio = require("cheerio");
+const axios = require("axios");
+const cheerio = require("cheerio");
 
-// Require all models
-var db = require("./models");
-
-var PORT = 3000;
+// Database Constants
+const db = require("./models");
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/nprscraper";
+const PORT = 3000;
 
 // Initialize Express
-var app = express();
+const app = express();
 
 // Configure middleware
-
 // Use morgan logger for logging requests
 app.use(logger("dev"));
 // Use body-parser for handling form submissions
 app.use(bodyParser.urlencoded({ extended: false }));
 // Use express.static to serve the public folder as a static directory
-app.use(express.static("public"));
+// app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, '/node_modules/bootstrap/dist')));
+app.use(express.static(path.join(__dirname, '/node_modules/bootbox/')));
 
 // Set mongoose to leverage built in JavaScript ES6 Promises
 // Connect to the Mongo DB
 mongoose.Promise = Promise;
-mongoose.connect("mongodb://localhost/week18Populater", {
+mongoose.connect(MONGODB_URI, {
   useMongoClient: true
 });
 
 // Routes
 
-// A GET route for scraping the echojs website
-app.get("/scrape", function(req, res) {
-  // First, we grab the body of the html with request
-  axios.get("http://www.echojs.com/").then(function(response) {
-    // Then, we load that into cheerio and save it to $ for a shorthand selector
-    var $ = cheerio.load(response.data);
+// Helper functions
 
-    // Now, we grab every h2 within an article tag, and do the following:
-    $("article h2").each(function(i, element) {
-      // Save an empty result object
-      var result = {};
-
-      // Add the text and href of every link, and save them as properties of the result object
-      result.title = $(this)
-        .children("a")
-        .text();
-      result.link = $(this)
-        .children("a")
-        .attr("href");
-
-      // Create a new Article using the `result` object built from scraping
-      db.Article
-        .create(result)
-        .then(function(dbArticle) {
-          // If we were able to successfully scrape and save an Article, send a message to the client
-          res.send("Scrape Complete");
-        })
-        .catch(function(err) {
-          // If an error occurred, send it to the client
-          res.json(err);
-        });
-    });
+// Select NPR articles from a passed in axios response,
+// And pass back an array of article objects
+const createArticleList = (response) => {
+  // Load the data into cheerio and save it to $ for a shorthand selector
+  let $ = cheerio.load(response.data);
+  /* 
+    NPR structure as of 12/2017:
+      <div class="story-text">
+        <div class="slug-wrap">
+          <h2 class="slug">
+            <a href = "section link">Section Name</a>
+          </h2>
+        </div>
+        <a href="story link">
+          <h1 class="title">Story Title</h1>
+        </a>
+        <a href="story link">
+          <p class = "teaser">Teaser text...</p>
+        </a>
+      </div>
+  */
+  let articleList = [];
+  let dbLookupPromises = [];
+  $('h1.title').each(function(i, element) {
+    if (element.parent.name === "a") {
+      let aArticle = {
+        title:  element.children[0].data.trim(),
+        link:   element.parent.attribs.href,
+        teaser: $(element.parent).siblings('a').children('p.teaser').text().trim()
+      }
+      // Look for an existing article within articleList that matches the current article title
+      // Only add to list if the title does not already exist
+      let articleExists = articleList.find((element)=>{
+        return element.title === aArticle.title
+      });
+      if (!articleExists) {
+        articleList.push(aArticle);
+        dbLookupPromises.push(db.Article.findOne({ link: aArticle.link }));
+      }
+    }
   });
+
+  return Promise.all(dbLookupPromises)
+    .then(dbResults => {
+      // Filter out articles that found a match in the db
+      return articleList.filter((article, aIndex) => {
+        return !dbResults[aIndex];
+      });
+    })
+};
+
+// A GET route for scraping the NPR website
+app.get("/scrape", function(req, res) {
+  // Request the html with axios
+  axios.get("https://www.npr.org/").then(function(response) {
+
+    createArticleList(response).then(articleList => {
+
+      db.Article
+      // Create new Articles by passing in articleList
+      .create(articleList)
+      .then(function(newArticles) {
+        // Send response if all articles were created
+        res.json(newArticles);
+      })
+      .catch(function(err) {
+        // If an error occurred, send it to the client
+        res.json(err);
+      });
+    });
+    })
+  .catch(function(err) {
+    res.send(err)
+  });
+
 });
 
 // Route for getting all Articles from the db
@@ -75,6 +120,7 @@ app.get("/articles", function(req, res) {
   // Grab every document in the Articles collection
   db.Article
     .find({})
+    .populate("notes")
     .then(function(dbArticle) {
       // If we were able to successfully find Articles, send them back to the client
       res.json(dbArticle);
@@ -85,13 +131,13 @@ app.get("/articles", function(req, res) {
     });
 });
 
-// Route for grabbing a specific Article by id, populate it with it's note
+// Route for grabbing a specific Article by id, populate it with it's notes
 app.get("/articles/:id", function(req, res) {
   // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
   db.Article
     .findOne({ _id: req.params.id })
     // ..and populate all of the notes associated with it
-    .populate("note")
+    .populate("notes")
     .then(function(dbArticle) {
       // If we were able to successfully find an Article with the given id, send it back to the client
       res.json(dbArticle);
@@ -108,10 +154,8 @@ app.post("/articles/:id", function(req, res) {
   db.Note
     .create(req.body)
     .then(function(dbNote) {
-      // If a Note was created successfully, find one Article with an `_id` equal to `req.params.id`. Update the Article to be associated with the new Note
-      // { new: true } tells the query that we want it to return the updated User -- it returns the original by default
-      // Since our mongoose query returns a promise, we can chain another `.then` which receives the result of the query
-      return db.Article.findOneAndUpdate({ _id: req.params.id }, { note: dbNote._id }, { new: true });
+      // If the note creation was successful, update the Article's "notes" array by adding the new note id
+      return db.Article.findOneAndUpdate({ _id: req.params.id }, { $push: { notes: dbNote._id } }, { new: true });
     })
     .then(function(dbArticle) {
       // If we were able to successfully update an Article, send it back to the client
@@ -125,5 +169,6 @@ app.post("/articles/:id", function(req, res) {
 
 // Start the server
 app.listen(PORT, function() {
+  console.log(moment().format());
   console.log("App running on port " + PORT + "!");
 });
